@@ -1,0 +1,32 @@
+{
+  "model": "opus[1m]",
+  "enabledPlugins": {
+    "beads@beads-marketplace": true,
+    "action-review@sona-marketplace": true,
+    "code-reviewer@sona-marketplace": true,
+    "doc-ticket-solver@sona-marketplace": true,
+    "mb-query@sona-marketplace": true,
+    "sona-playwright@sona-marketplace": true,
+    "skill-audit@sona-marketplace": true,
+    "oi@sona-marketplace": true,
+    "compound-engineering@compound-engineering-plugin": true
+  },
+  "extraKnownMarketplaces": {
+    "sona-marketplace": {
+      "source": {
+        "source": "github",
+        "repo": "sona-is/marketplace"
+      }
+    },
+    "compound-engineering-plugin": {
+      "source": {
+        "source": "github",
+        "repo": "EveryInc/compound-engineering-plugin"
+      }
+    }
+  },
+  "alwaysThinkingEnabled": false,
+  "effortLevel": "high",
+  "skipWorkflowUsageWarning": true,
+  "editorMode": "vim"
+}

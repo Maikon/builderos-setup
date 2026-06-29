@@ -1,0 +1,24 @@
+# BuilderOS personalisation manifest.
+#
+# Runs on every VM launch (task + session), after repo checkout and before the
+# agent starts. Operations run in the order listed.
+#
+# Set the reference with:
+#   fv personalisation set --url <git-url-of-this-repo> --required
+#
+# NOTE: `target` paths are absolute. `~` is NOT expanded — use /home/dev/...
+apply:
+  # 1. Merge our Claude settings (enabled plugins, marketplaces, editor prefs)
+  #    into the VM's settings.json. Deep-merge, so anything the image already
+  #    sets is preserved unless we override the same key.
+  - merge_config:
+      target: /home/dev/.claude/settings.json
+      from: claude/settings.json
+      format: json
+
+  # 2. Register MCP servers (Sentry, Tidewave, Atlassian, Notion, etc.) and
+  #    do any other setup. This is the escape hatch for anything merge_config
+  #    can't express.
+  - run_script:
+      script: setup/install-mcps.sh
+      run_as: dev
