@@ -8,7 +8,9 @@ Personal [BuilderOS](https://app.notion.com/p/getsona/BuilderOS-Platform-Guide-3
 .builderos/personalisation.yaml   # manifest: ordered apply: list (runs every launch)
 claude/settings.json              # merged into /home/dev/.claude/settings.json
 claude/hooks/                     # hook scripts (silent bash + auto mix-format), from hl/claude
+skills/                           # personal skills, copied to /home/dev/.claude/skills/
 setup/install-hooks.sh            # copies claude/hooks/ to /home/dev/.claude/hooks/
+setup/install-skills.sh           # copies skills/ to /home/dev/.claude/skills/
 setup/install-mcps.sh             # registers MCP servers (sentry, notion, tidewave) at user scope
 ```
 

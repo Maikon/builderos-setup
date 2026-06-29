@@ -23,7 +23,12 @@ apply:
       script: setup/install-hooks.sh
       run_as: dev
 
-  # 3. Register MCP servers (Sentry, Notion, Tidewave) at user scope.
+  # 3. Install personal skills bundled in skills/ into ~/.claude/skills.
+  - run_script:
+      script: setup/install-skills.sh
+      run_as: dev
+
+  # 4. Register MCP servers (Sentry, Notion, Tidewave) at user scope.
   #    atlassian is deliberately NOT registered here — the platform injects it
   #    from the dashboard Jira connection. See the script header.
   - run_script:
