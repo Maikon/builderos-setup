@@ -3,8 +3,12 @@
 # Register MCP servers on a fresh BuilderOS VM, mirroring the local Sona
 # backend project-scoped setup.
 #
-# Run as the `dev` user (see .builderos/personalisation.yaml). Scoped to the
-# Sona repo checkout so these match a local `cd sona && claude` session.
+# Run as the `dev` user (see .builderos/personalisation.yaml).
+#
+# Registered at USER scope (--scope user) so the servers are visible to the
+# agent regardless of which directory it launches from. `claude mcp add`
+# defaults to `local` (project) scope, which is keyed to the current working
+# dir and would be invisible if the agent runs elsewhere.
 #
 # AUTH NOTE: the remote servers below (sentry, atlassian, notion) use OAuth.
 # Registering them does NOT log you in — on first use inside the VM you must
@@ -12,24 +16,13 @@
 # to copy your local OAuth session onto the VM.
 set -euo pipefail
 
-# Where the Sona repo is checked out on the VM. Adjust if BuilderOS clones it
-# somewhere other than the dev home directory.
-REPO_DIR="${SONA_REPO_DIR:-$HOME/sona}"
-
-if [ ! -d "$REPO_DIR" ]; then
-  echo "[install-mcps] repo dir $REPO_DIR not found; registering at user scope instead" >&2
-  REPO_DIR="$HOME"
-fi
-
-cd "$REPO_DIR"
-
 add() {
   # add <name> <transport> <url-or-cmd...>
   # Idempotent: remove any existing registration first, ignore failure.
   local name="$1"; shift
-  claude mcp remove "$name" >/dev/null 2>&1 || true
-  echo "[install-mcps] adding $name"
-  claude mcp add "$name" "$@"
+  claude mcp remove "$name" --scope user >/dev/null 2>&1 || true
+  echo "[install-mcps] adding $name (user scope)"
+  claude mcp add --scope user "$name" "$@"
 }
 
 # --- Remote OAuth servers (need /mcp auth in-VM on first use) ---------------
