@@ -28,9 +28,16 @@ add() {
 # --- Remote OAuth servers (need /mcp auth in-VM on first use) ---------------
 add sentry    --transport http https://mcp.sentry.dev/mcp
 
-# Atlassian (Jira/Confluence) and Notion — remote OAuth.
-add atlassian --transport http https://mcp.atlassian.com/v1/mcp
+# Notion — remote OAuth.
 add notion    --transport http https://mcp.notion.com/mcp
+
+# NOTE: we deliberately do NOT register `atlassian` here. BuilderOS injects
+# ATLASSIAN_MCP_AUTHORIZATION (a Bearer token) from your dashboard Jira
+# connection and wires the Atlassian MCP automatically. Registering our own
+# atlassian entry shadows the platform's pre-authenticated one with an
+# unauthenticated duplicate, which then fails interactive OAuth with
+# "client_id may not be blank" (Atlassian uses DCR, not a static client_id).
+# Connect Jira in the BuilderOS dashboard instead; do not /mcp-auth atlassian.
 
 # --- Local servers ----------------------------------------------------------
 # Tidewave talks to the running Phoenix app. Only works if the app is started
