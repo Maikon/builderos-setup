@@ -1,0 +1,24 @@
+# This repo is PUBLIC. Never commit secrets or the noisy parts of ~/.claude.
+# The maintainer flagged this twice in #dev-builder-os — get it right.
+
+# Local Claude runtime state (only claude/settings.json is intentionally tracked)
+.claude/
+**/.claude.json
+**/.credentials.json
+**/.last-update-result.json
+
+# Anything that smells like a secret
+*.pem
+*.key
+id_rsa*
+id_ed25519*
+.env
+.env.*
+*token*
+*secret*
+*credential*
+
+# OS / editor cruft
+.DS_Store
+*.swp
+*~
