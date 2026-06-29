@@ -7,8 +7,14 @@ Personal [BuilderOS](https://app.notion.com/p/getsona/BuilderOS-Platform-Guide-3
 ```
 .builderos/personalisation.yaml   # manifest: ordered apply: list (runs every launch)
 claude/settings.json              # merged into /home/dev/.claude/settings.json
-setup/install-mcps.sh             # registers MCP servers (sentry, tidewave, ...)
+claude/hooks/                     # hook scripts (silent bash + auto mix-format), from hl/claude
+setup/install-hooks.sh            # copies claude/hooks/ to /home/dev/.claude/hooks/
+setup/install-mcps.sh             # registers MCP servers (sentry, notion, tidewave) at user scope
 ```
+
+The hooks (sourced from Henry's `hl/claude`) make `mix compile/test/format/credo/dialyzer`
+print only a one-line summary on success (full output on failure), and auto-run
+`mix format` on every edited `.ex`/`.exs`.
 
 ## Wiring it up (one-time)
 

@@ -16,9 +16,16 @@ apply:
       from: claude/settings.json
       format: json
 
-  # 2. Register MCP servers (Sentry, Tidewave, Atlassian, Notion, etc.) and
-  #    do any other setup. This is the escape hatch for anything merge_config
-  #    can't express.
+  # 2. Install the Claude Code hook scripts (silent bash wrapper + auto
+  #    mix-format on edit) that the merged settings.json references at
+  #    ~/.claude/hooks/. The files must be on disk for the hooks to fire.
+  - run_script:
+      script: setup/install-hooks.sh
+      run_as: dev
+
+  # 3. Register MCP servers (Sentry, Notion, Tidewave) at user scope.
+  #    atlassian is deliberately NOT registered here — the platform injects it
+  #    from the dashboard Jira connection. See the script header.
   - run_script:
       script: setup/install-mcps.sh
       run_as: dev
