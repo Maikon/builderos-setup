@@ -30,6 +30,16 @@
   "skipWorkflowUsageWarning": true,
   "editorMode": "vim",
   "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/fix_atlassian_mcp.sh"
+          }
+        ]
+      }
+    ],
     "PreToolUse": [
       {
         "matcher": "Bash",

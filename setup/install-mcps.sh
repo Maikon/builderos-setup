@@ -30,30 +30,12 @@ add sentry    --transport http https://mcp.sentry.dev/mcp
 # Notion — remote OAuth.
 add notion    --transport http https://mcp.notion.com/mcp
 
-# Atlassian (Jira/Confluence) — register it ourselves using the token BuilderOS
-# injects from the dashboard Jira connection (ATLASSIAN_MCP_AUTHORIZATION).
-#
-# Why we do this rather than rely on the platform: the platform sets the env var
-# but does NOT wire it into the atlassian MCP registration's Authorization
-# header, so atlassian shows up unauthenticated on a fresh VM. We bridge that
-# gap here. Do NOT use interactive `/mcp` auth on atlassian — it uses Dynamic
-# Client Registration and fails with "client_id may not be blank".
-#
-# No secret is committed: the value is read from the VM's runtime env. Guarded
-# so it's a clean no-op if the platform ever starts wiring this itself or the
-# var is absent. The injected value may or may not already include "Bearer ".
-if [ -n "${ATLASSIAN_MCP_AUTHORIZATION:-}" ]; then
-  auth="$ATLASSIAN_MCP_AUTHORIZATION"
-  case "$auth" in
-    [Bb]earer\ *) ;;            # already prefixed
-    *) auth="Bearer $auth" ;;   # add the prefix
-  esac
-  add atlassian --transport http https://mcp.atlassian.com/v1/mcp \
-    --header "Authorization: $auth"
-else
-  echo "[install-mcps] ATLASSIAN_MCP_AUTHORIZATION not set — skipping atlassian." \
-       "(Connect Jira in the BuilderOS dashboard, then relaunch.)" >&2
-fi
+# Atlassian is NOT registered here. The platform registers its own atlassian
+# (at .../v1/mcp/authv2, interactive-OAuth) AFTER personalisation runs, so
+# anything we set during this script gets clobbered. Instead, a SessionStart
+# hook (claude/hooks/fix_atlassian_mcp.sh, wired via settings.json) re-registers
+# it with the injected ATLASSIAN_MCP_AUTHORIZATION token after the platform has
+# had its turn — see that script for the full rationale.
 
 # --- Local servers ----------------------------------------------------------
 # Tidewave talks to the running Phoenix app. Only works if the app is started
