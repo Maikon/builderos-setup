@@ -10,10 +10,9 @@
 # defaults to `local` (project) scope, which is keyed to the current working
 # dir and would be invisible if the agent runs elsewhere.
 #
-# AUTH NOTE: the remote servers below (sentry, atlassian, notion) use OAuth.
-# Registering them does NOT log you in — on first use inside the VM you must
-# run `/mcp` in Claude Code and complete the browser auth flow. There is no way
-# to copy your local OAuth session onto the VM.
+# AUTH NOTE: sentry and notion use OAuth — registering them does NOT log you
+# in; run `/mcp` in Claude Code and complete the browser flow on first use.
+# atlassian is different: it's wired from the platform-injected token (below).
 set -euo pipefail
 
 add() {
@@ -31,13 +30,30 @@ add sentry    --transport http https://mcp.sentry.dev/mcp
 # Notion — remote OAuth.
 add notion    --transport http https://mcp.notion.com/mcp
 
-# NOTE: we deliberately do NOT register `atlassian` here. BuilderOS injects
-# ATLASSIAN_MCP_AUTHORIZATION (a Bearer token) from your dashboard Jira
-# connection and wires the Atlassian MCP automatically. Registering our own
-# atlassian entry shadows the platform's pre-authenticated one with an
-# unauthenticated duplicate, which then fails interactive OAuth with
-# "client_id may not be blank" (Atlassian uses DCR, not a static client_id).
-# Connect Jira in the BuilderOS dashboard instead; do not /mcp-auth atlassian.
+# Atlassian (Jira/Confluence) — register it ourselves using the token BuilderOS
+# injects from the dashboard Jira connection (ATLASSIAN_MCP_AUTHORIZATION).
+#
+# Why we do this rather than rely on the platform: the platform sets the env var
+# but does NOT wire it into the atlassian MCP registration's Authorization
+# header, so atlassian shows up unauthenticated on a fresh VM. We bridge that
+# gap here. Do NOT use interactive `/mcp` auth on atlassian — it uses Dynamic
+# Client Registration and fails with "client_id may not be blank".
+#
+# No secret is committed: the value is read from the VM's runtime env. Guarded
+# so it's a clean no-op if the platform ever starts wiring this itself or the
+# var is absent. The injected value may or may not already include "Bearer ".
+if [ -n "${ATLASSIAN_MCP_AUTHORIZATION:-}" ]; then
+  auth="$ATLASSIAN_MCP_AUTHORIZATION"
+  case "$auth" in
+    [Bb]earer\ *) ;;            # already prefixed
+    *) auth="Bearer $auth" ;;   # add the prefix
+  esac
+  add atlassian --transport http https://mcp.atlassian.com/v1/mcp \
+    --header "Authorization: $auth"
+else
+  echo "[install-mcps] ATLASSIAN_MCP_AUTHORIZATION not set — skipping atlassian." \
+       "(Connect Jira in the BuilderOS dashboard, then relaunch.)" >&2
+fi
 
 # --- Local servers ----------------------------------------------------------
 # Tidewave talks to the running Phoenix app. Only works if the app is started
