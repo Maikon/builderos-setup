@@ -30,11 +30,15 @@ add sentry    --transport http https://mcp.sentry.dev/mcp
 # Notion — remote OAuth.
 add notion    --transport http https://mcp.notion.com/mcp
 
-# Atlassian is NOT registered here — the platform handles it natively. As of the
-# 2026-06-29 BuilderOS release (#408), atlassian is registered against the token
-# endpoint with the injected ATLASSIAN_MCP_AUTHORIZATION credential and connects
-# without any in-VM login. (Earlier this needed a SessionStart-hook workaround;
-# that's now removed.) Just connect Jira in the BuilderOS dashboard.
+# Atlassian is NOT registered here — it's handled by a SessionStart hook
+# (claude/hooks/fix_atlassian_mcp.sh) instead. The 2026-06-29 BuilderOS release
+# (#408) switched the platform's atlassian registration to the correct token
+# endpoint (/v1/mcp) but STILL does not attach the injected
+# ATLASSIAN_MCP_AUTHORIZATION token to it — verified on a fresh VM 2026-06-30,
+# where it shows "Needs authentication" until the token is wired in as a header.
+# The hook does that after the platform's registration lands. (It must be a
+# SessionStart hook, not this script: this script runs during personalisation,
+# before the platform registers atlassian, so it would be overwritten.)
 
 # --- Local servers ----------------------------------------------------------
 # Tidewave talks to the running Phoenix app. Only works if the app is started
