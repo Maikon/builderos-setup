@@ -35,7 +35,10 @@ print only a one-line summary on success (full output on failure), and auto-run
 ## Caveats
 
 - **Keep this repo public-safe.** No secrets in tracked files — the MCP servers authenticate in-VM (below), never from committed credentials. `.gitignore` guards against accidentally committing `~/.claude` runtime state.
-- **OAuth MCP servers don't carry your local session.** `sentry`, `atlassian`, `notion` need `/mcp` auth inside the VM on first use. Local OAuth tokens can't be copied over.
+- **`sentry` / `notion` need one-time `/mcp` OAuth in-VM** (interactive browser flow; local tokens don't carry over).
+- **`atlassian` is different — and has a known per-session gotcha.** It's authenticated automatically from the platform-injected `ATLASSIAN_MCP_AUTHORIZATION` token (by both `install-mcps.sh` and the `fix_atlassian_mcp.sh` SessionStart hook). The on-disk config ends up `✔ Connected` with all the Jira tools. **But** BuilderOS launches the agent with `claude --continue`, which resumes the prior session's MCP connection state — so a fresh/resumed agent often still shows atlassian as "needs authentication" even though the config is correct.
+  - **Fix:** in the session, `/mcp → atlassian → reconnect`. This forces the agent to re-read the (correct) config. **Do NOT paste the OAuth/localhost URL** — that's the wrong path (the localhost callback can't reach the VM) and atlassian is already authenticated in config.
+  - Root cause is platform-side (token not attached to the platform's own registration + `--continue` resuming stale connections), not this repo. Reported to `#dev-builder-os`.
 - **`merge_config` target must be absolute.** Use `/home/dev/.claude/settings.json`, never `~/...` — `~` isn't expanded on the VM, the merge is silently dropped, and your plugins show up disabled on a fresh VM.
 - **`tidewave` needs the app running.** VMs boot clone-only; start Phoenix on :4000 in-VM first.
 - Per-launch overrides: `fv task --no-personalisation ...` or `fv task --personalisation <ref> ...`.
