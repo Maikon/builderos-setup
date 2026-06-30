@@ -30,15 +30,34 @@ add sentry    --transport http https://mcp.sentry.dev/mcp
 # Notion — remote OAuth.
 add notion    --transport http https://mcp.notion.com/mcp
 
-# Atlassian is NOT registered here — it's handled by a SessionStart hook
-# (claude/hooks/fix_atlassian_mcp.sh) instead. The 2026-06-29 BuilderOS release
-# (#408) switched the platform's atlassian registration to the correct token
-# endpoint (/v1/mcp) but STILL does not attach the injected
-# ATLASSIAN_MCP_AUTHORIZATION token to it — verified on a fresh VM 2026-06-30,
-# where it shows "Needs authentication" until the token is wired in as a header.
-# The hook does that after the platform's registration lands. (It must be a
-# SessionStart hook, not this script: this script runs during personalisation,
-# before the platform registers atlassian, so it would be overwritten.)
+# Atlassian — belt-and-braces. The 2026-06-29 BuilderOS release (#408) points
+# the platform's atlassian at the correct token endpoint (/v1/mcp) but does NOT
+# attach the injected ATLASSIAN_MCP_AUTHORIZATION token, so it comes up "Needs
+# authentication" (verified on a fresh VM 2026-06-30).
+#
+# We fix it in TWO places, on purpose:
+#   1. Here (personalisation) — so the agent's startup MCP load already has the
+#      authenticated registration, avoiding the "restart once" race where the
+#      agent boots before the config is fixed.
+#   2. claude/hooks/fix_atlassian_mcp.sh (SessionStart) — re-asserts it AFTER
+#      the platform registers its token-less entry, which lands later in
+#      provisioning and would otherwise overwrite step 1.
+# Both use the same logic; running twice is harmless (idempotent).
+#
+# Guarded: no-op if the token isn't injected. Tolerant of whether the value
+# already carries the "Bearer " prefix. No secret committed — read from env.
+if [ -n "${ATLASSIAN_MCP_AUTHORIZATION:-}" ]; then
+  atl_auth="$ATLASSIAN_MCP_AUTHORIZATION"
+  case "$atl_auth" in
+    [Bb]earer\ *) ;;                    # already prefixed
+    *) atl_auth="Bearer $atl_auth" ;;   # add the prefix
+  esac
+  add atlassian --transport http https://mcp.atlassian.com/v1/mcp \
+    --header "Authorization: $atl_auth"
+else
+  echo "[install-mcps] ATLASSIAN_MCP_AUTHORIZATION not set — skipping atlassian." \
+       "(Connect Jira in the dashboard; the SessionStart hook will retry.)" >&2
+fi
 
 # --- Local servers ----------------------------------------------------------
 # Tidewave talks to the running Phoenix app. Only works if the app is started
