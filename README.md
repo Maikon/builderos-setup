@@ -7,16 +7,25 @@ Personal [BuilderOS](https://app.notion.com/p/getsona/BuilderOS-Platform-Guide-3
 ```
 .builderos/personalisation.yaml   # manifest: ordered apply: list (runs every launch)
 claude/settings.json              # merged into /home/dev/.claude/settings.json
-claude/hooks/                     # hook scripts (silent bash + auto mix-format), from hl/claude
-skills/                           # personal skills, copied to /home/dev/.claude/skills/
+claude/hooks/                     # hook scripts (silent bash, elixir auto-format, atlassian fix)
+skills/                           # personal skills + sona-pre-pr-checks, copied to ~/.claude/skills/
 setup/install-hooks.sh            # copies claude/hooks/ to /home/dev/.claude/hooks/
 setup/install-skills.sh           # copies skills/ to /home/dev/.claude/skills/
 setup/install-mcps.sh             # registers MCP servers (sentry, notion, tidewave) at user scope
 ```
 
-The hooks (sourced from Henry's `hl/claude`) make `mix compile/test/format/credo/dialyzer`
-print only a one-line summary on success (full output on failure), and auto-run
-`mix format` on every edited `.ex`/`.exs`.
+The silent-bash hook (from Henry's `hl/claude`) makes `mix compile/test/format/credo/dialyzer`
+print only a one-line summary on success (full output on failure). The auto-format
+hook runs `mix format` on edited `.ex`/`.exs` files **only when a local `mix`
+exists** — so it works on your laptop and cleanly no-ops on BuilderOS VMs (which
+have no local Elixir toolchain).
+
+**Passing CI from a BuilderOS session:** VMs have no local Elixir toolchain, so
+`mix format`/`credo`/etc. must run through Docker. The `sona-pre-pr-checks` skill
+runs the exact gates `backend-ci.yml` enforces (format, credo, translations,
+missing indexes, dialyzer) via `docker compose run --rm backend mix ...` before
+you open a PR — so the PR doesn't fail CI on them. Invoke it by intent
+("check this passes CI before I open the PR") or before any `gh pr create`.
 
 ## Wiring it up (one-time)
 

@@ -57,7 +57,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "jq -r '.tool_input.file_path | select(test(\"\\\\.exs?$\"))' | xargs -I{} mix format \"{}\""
+            "command": "~/.claude/hooks/format_elixir_edit.sh"
           }
         ]
       }
